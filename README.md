@@ -1,1 +1,1 @@
-# blog-visi-n-rob-tica
+# blog-vision-robotica

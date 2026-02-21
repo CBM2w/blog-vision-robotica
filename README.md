@@ -1,0 +1,1 @@
+# blog-visi-n-rob-tica

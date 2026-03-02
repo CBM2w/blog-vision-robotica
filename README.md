@@ -42,3 +42,15 @@ Uno de los cambios más importantes fue introducir velocidad variable. En lugar 
 Otra mejora fue calcular el centroide utilizando solo la parte inferior de la máscara, centrándome en la zona más cercana al robot. Esto permitió una reacción más precisa en curvas y redujo aún más las oscilaciones.
 
 Con todos estos cambios el tiempo de recorrido se redujo prácticamente a la mitad, pasando de casi 10 minutos a aproximadamente 5 minutos por vuelta. Además, el comportamiento general se volvió algo más estable y fluido, aunque aún oscila un poco en las curvas y el tiempo de recorrido es lento.
+
+_02/03/2026_
+
+En el tiempo dedicado hoy tuve que dar un pequeño paso atrás para poder avanzar mejor. Después de tantas pruebas y modificaciones, el código se había vuelto demasiado largo y difícil de seguir. Había añadido cambios sobre cambios, y eso estaba empezando a generar más confusión que mejoras reales. Por eso decidí simplificarlo y limpiarlo, dejando únicamente lo necesario para que el comportamiento fuera claro y controlable.
+
+También añadí un sistema de recover para cuando el robot se sale de la línea. En lugar de quedarse bloqueado, ahora detecta la pérdida de la máscara y realiza un giro en la última dirección conocida hasta volver a encontrar la trayectoria. Esto hace que el sistema sea mucho más robusto y no dependa de que todo salga perfecto en cada curva.
+
+He realizado muchas pruebas variando los parámetros. El objetivo era encontrar un equilibrio entre estabilidad y rapidez sin introducir más oscilaciones, y aunque he reducido el tiempo de recorrido a aproximadamente 2 minutos, aún hace muchas oscilaciones bruscas al entrar y salir de las curvas ya que le cuesta volver a coger el camino al salirse. Además, he visto que pequeños cambios en los valores modifican bastante el comportamiento del robot.
+
+Un inconveniente bastante grande ha sido que, cometando el tiempo de recorrido con un compañero, nos dimos cuenta de que el tiempo que marca el simulador está ligado al navegador, pero el simulador no funciona a velocidad real, sino que va más lento. Esto significa que el tiempo que se muestra no corresponde exactamente al tiempo real del circuito, por lo que no es una medida completamente fiable para evaluar el rendimiento, lo cual ha sido un poco frustrante después de todas las pruebas que he hecho sin éxito de bajar de 2.5 minutos el tiempo de recorrido.
+
+Hoy me ha servido para ordenar el trabajo que tenía hasta ahora y entender mejor cómo influyen los parámetros en el comportamiento del robot haciendo prueba y error.

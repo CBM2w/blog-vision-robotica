@@ -53,4 +53,4 @@ He realizado muchas pruebas variando los parámetros. El objetivo era encontrar 
 
 Un inconveniente bastante grande ha sido que, cometando el tiempo de recorrido con un compañero, nos dimos cuenta de que el tiempo que marca el simulador está ligado al navegador, pero el simulador no funciona a velocidad real, sino que va más lento. Esto significa que el tiempo que se muestra no corresponde exactamente al tiempo real del circuito, por lo que no es una medida completamente fiable para evaluar el rendimiento, lo cual ha sido un poco frustrante después de todas las pruebas que he hecho sin éxito de bajar de 2.5 minutos el tiempo de recorrido.
 
-Hoy me ha servido para ordenar el trabajo que tenía hasta ahora y entender mejor cómo influyen los parámetros en el comportamiento del robot haciendo prueba y error.
+Hoy principalmente me ha servido para ordenar el trabajo que tenía hasta ahora y entender mejor cómo influyen los parámetros en el robot a base de prueba y error.

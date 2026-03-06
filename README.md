@@ -54,3 +54,13 @@ He realizado muchas pruebas variando los parámetros. El objetivo era encontrar 
 Un inconveniente bastante grande ha sido que, cometando el tiempo de recorrido con un compañero, nos dimos cuenta de que el tiempo que marca el simulador está ligado al navegador, pero el simulador no funciona a velocidad real, sino que va más lento. Esto significa que el tiempo que se muestra no corresponde exactamente al tiempo real del circuito, por lo que no es una medida completamente fiable para evaluar el rendimiento, lo cual ha sido un poco frustrante después de todas las pruebas que he hecho sin éxito de bajar de 2.5 minutos el tiempo de recorrido.
 
 Hoy principalmente me ha servido para ordenar el trabajo que tenía hasta ahora y entender mejor cómo influyen los parámetros en el robot a base de prueba y error.
+
+_05/03/2026_
+
+He realizado más pruebas con los parámetros del controlador. Después de las pruebas del día anterior, me centré especialmente en ajustar el valor del término derivativo para ver si conseguía reducir las oscilaciones que todavía aparecían en las curvas. Probé diferentes configuraciones y finalmente opté por aumentar bastante el valor de Kd. Este cambio dio un resultado bastante bueno, ya que el robot empezó a corregir de forma más suave cuando se desviaba de la línea. Con esto coseguí reducir bastante las oscilaciones al entrar en las curvas, aunque todavía aparece algo de movimiento lateral antes de estabilizarse.
+
+Ya sabiendo que hay que fijarse en el tiempo de simulación para saber cuánto es el tiempo real del recorrido he visto que, con la configuración actual el tiempo de la vuelta se ha reducido bastante y ahora suele estar entre 50 y 60 segundos, dependiendo de la ejecución.
+
+Además, modifiqué el cálculo del ratio que ajusta la velocidad en función del giro. Antes era lineal, pero ahora lo hice cuadrático, de forma que el robot reduce la velocidad mucho más cuando entra en curvas muy cerradas. Con el cálculo anterior, al entrar rápido en esas curvas el robot tendía a salirse bastante y luego oscilaba demasiado intentando volver a la línea. Con el ratio cuadrático el frenado es más fuerte en esas situaciones, lo que ayuda a recuperar la trayectoria de forma más estable, perdiendo también menos tiempo en la recuperación.
+
+Aunque el comportamiento mejoró con respecto a las pruebas anteriores, todavía se aprecia un poco de oscilación en algunas curvas, por lo que probablemente aún sea necesario seguir afinando los parámetros en futuras pruebas.

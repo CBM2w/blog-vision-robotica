@@ -79,9 +79,22 @@ El robot obtiene continuamente imágenes de la cámara y procesa únicamente una
 
 La línea se detecta mediante segmentación por color en el espacio HSV. Se utilizan dos rangos de rojo para capturar correctamente el color, ya que en este espacio de color el rojo aparece dividido en dos zonas del espectro. Una vez obtenida la máscara binaria de la línea, se aplican operaciones morfológicas para eliminar ruido y mejorar la continuidad de la detección. Este paso resulta importante para evitar detecciones erróneas que puedan provocar cambios bruscos en el control del robot. 
 
-<img width="450" height="300" alt="Mascara linea" src="https://github.com/user-attachments/assets/05900a70-4530-45b4-9250-1a3d7872e900" />  <img width="500" height="500" alt="Punto centroide a las 21 44 45" src="https://github.com/user-attachments/assets/8c7d9a3f-5ea9-457c-9d3d-ba7a50186e28" />
+<p align="center">
+  <img width="450" height="300" alt="Mascara linea" src="https://github.com/user-attachments/assets/05900a70-4530-45b4-9250-1a3d7872e900">
+
+<p align="center">
+  <em>Máscara de detección de la línea roja</em>
+</p>
 
 Finalmente se calcula el centroide de la región detectada utilizando los momentos de la máscara. Este punto representa la posición aproximada de la línea dentro de la imagen y se utiliza posteriormente para calcular el error de seguimiento.
+
+<p align="center">
+    <img width="500" height="500" alt="Punto centroide a las 21 44 45" src="https://github.com/user-attachments/assets/8c7d9a3f-5ea9-457c-9d3d-ba7a50186e28" />
+</p>
+
+<p align="center">
+  <em>Centroide detectado en la máscara de la línea</em>
+</p>
 
 #### Cálculo del error
 El error se calcula como la diferencia entre el centro horizontal de la imagen y la posición del centroide de la línea detectada. Si la línea aparece desplazada hacia la izquierda o hacia la derecha, el error es negativo o positivo respectivamente lo que indica cuánto debe girar el robot para volver a centrarla. En el caso idela, cuando la línea está perfectamente centrada, el error es cero. Este error es la variable principal que se utiliza como entrada del controlador.
@@ -115,27 +128,51 @@ Para evaluar el comportamiento del sistema se realizaron diferentes pruebas en v
 
 En primer lugar se realizaron pruebas en el circuito _Simple Circuit_, que fue el utilizado principalmente durante el desarrollo del algoritmo. Con la configuración final del controlador y del sistema de velocidad, el robot es capaz de completar el recorrido de forma estable en aproximadamente 60 segundos, dependiendo de la ejecución. En este circuito el robot consigue mantenerse sobre la línea durante todo el recorrido y corregir su trayectoria de forma generalmente suave al entrar en las curvas.
 
-VIDEO SIMPLE CIRCUIT:
+<p align="center">
+  <a href="https://youtu.be/DzrHEuiWoQ4">
+    <img src="https://img.youtube.com/vi/DzrHEuiWoQ4/0.jpg" alt="Video Simple Circuit">
+  </a>
+</p>
 
-[![Video Simple Circuit](https://img.youtube.com/vi/DzrHEuiWoQ4/0.jpg)](https://youtu.be/DzrHEuiWoQ4)
+<p align="center">
+  <em>Demostración del seguimiento de línea en el circuito Simple Circuit (≈60s).</em>
+</p>
 
 Para comprobar la robustez del sistema también se realizaron pruebas en otros circuitos disponibles en el simulador, como _Montreal_ y _Montmeló_. Estos circuitos presentan curvas más pronunciadas y trayectorias más exigentes, lo que permite evaluar mejor el comportamiento del controlador. En ambos casos el robot es capaz de seguir la línea y completar el recorrido de forma razonablemente estable, lo que demuestra que el algoritmo no está ajustado únicamente para un único circuito concreto.
 
-VIDEO MONTMELÓ CIRCUIT:
+<p align="center">
+  <a href="https://youtu.be/oOFyQ14TyKk">
+    <img src="https://img.youtube.com/vi/oOFyQ14TyKk/0.jpg" alt="Video Montmeló Circuit">
+  </a>
+</p>
 
-[![Video Montmeló](https://img.youtube.com/vi/oOFyQ14TyKk/0.jpg)](https://youtu.be/oOFyQ14TyKk)
+<p align="center">
+  <em>Demostración del seguimiento de línea en el circuito Montmeló.</em>
+</p>
 
 Sin embargo, en el circuito _Nürburgring_ el sistema no consigue completar el recorrido. Desde el inicio, en la primera recta, el robot se desvía hacia la izquierda y pierde inmediatamente la línea, quedándose sin capacidad de continuar el seguimiento. 
 
-VIDEO NURBURGUIN CIRCUIT:
+<p align="center">
+  <a href="https://youtu.be/4LWieVPGa0k">
+    <img src="https://img.youtube.com/vi/4LWieVPGa0k/0.jpg" alt="Video Nürburgring Circuit">
+  </a>
+</p>
 
-[![Video Nürburgring](https://img.youtube.com/vi/4LWieVPGa0k/0.jpg)](https://youtu.be/4LWieVPGa0k)
+<p align="center">
+  <em>Demostración del seguimiento de línea en el circuito Nürburgring.</em>
+</p>
 
 Además, se ha incluido una demostración del funcionamiento del modo recover forzando al robot a girar completamente a la izquierda al empezar lo que provoca que se posiciones mirando a la pared. En este vídeo se puede observar cómo, cuando el robot pierde la línea, el sistema detecta la ausencia de la máscara y comienza a retroceder mientras gira en la última dirección conocida. Si la línea no aparece inmediatamente, el robot alterna el sentido del giro hasta reencontrarla, permitiendo continuar el recorrido de forma autónoma.
 
-VIDEO RECOVER:
+<p align="center">
+  <a href="https://youtu.be/RWa0rHS_2go">
+    <img src="https://img.youtube.com/vi/RWa0rHS_2go/0.jpg" alt="Video Recover">
+  </a>
+</p>
 
-[![Video Recover](https://img.youtube.com/vi/RWa0rHS_2go/0.jpg)](https://youtu.be/RWa0rHS_2go)
+<p align="center">
+  <em>Demostración del modo recover.</em>
+</p>
 
 #### Conclusiones
 Esta práctica ha permitido comprender cómo combinar técnicas de visión artificial y control para resolver un problema de navegación autónoma.

@@ -115,19 +115,27 @@ Para evaluar el comportamiento del sistema se realizaron diferentes pruebas en v
 
 En primer lugar se realizaron pruebas en el circuito _Simple Circuit_, que fue el utilizado principalmente durante el desarrollo del algoritmo. Con la configuración final del controlador y del sistema de velocidad, el robot es capaz de completar el recorrido de forma estable en aproximadamente 60 segundos, dependiendo de la ejecución. En este circuito el robot consigue mantenerse sobre la línea durante todo el recorrido y corregir su trayectoria de forma generalmente suave al entrar en las curvas.
 
-[VIDEO SIMPLE CIRCUIT](https://youtu.be/DzrHEuiWoQ4)
+VIDEO SIMPLE CIRCUIT:
+
+[![Video Simple Circuit](https://img.youtube.com/vi/DzrHEuiWoQ4/0.jpg)](https://youtu.be/DzrHEuiWoQ4)
 
 Para comprobar la robustez del sistema también se realizaron pruebas en otros circuitos disponibles en el simulador, como _Montreal_ y _Montmeló_. Estos circuitos presentan curvas más pronunciadas y trayectorias más exigentes, lo que permite evaluar mejor el comportamiento del controlador. En ambos casos el robot es capaz de seguir la línea y completar el recorrido de forma razonablemente estable, lo que demuestra que el algoritmo no está ajustado únicamente para un único circuito concreto.
 
-[VIDEO MONTMELÓ](https://youtu.be/oOFyQ14TyKk)
+[VIDEO MONTMELÓ CIRCUIT](https://youtu.be/oOFyQ14TyKk)
+
+[![Video Montmeló](https://img.youtube.com/vi/oOFyQ14TyKk/maxresdefault.jpg)](https://youtu.be/oOFyQ14TyKk)
 
 Sin embargo, en el circuito _Nürburgring_ el sistema no consigue completar el recorrido. Desde el inicio, en la primera recta, el robot se desvía hacia la izquierda y pierde inmediatamente la línea, quedándose sin capacidad de continuar el seguimiento. 
 
-[VIDEO NURBURGUIN](https://youtu.be/4LWieVPGa0k)
+[VIDEO NURBURGUIN CIRCUIT](https://youtu.be/4LWieVPGa0k)
+
+[![Video Nürburgring](https://img.youtube.com/vi/4LWieVPGa0k/maxresdefault.jpg)](https://youtu.be/4LWieVPGa0k)
 
 Además, se ha incluido una demostración del funcionamiento del modo recover forzando al robot a girar completamente a la izquierda al empezar lo que provoca que se posiciones mirando a la pared. En este vídeo se puede observar cómo, cuando el robot pierde la línea, el sistema detecta la ausencia de la máscara y comienza a retroceder mientras gira en la última dirección conocida. Si la línea no aparece inmediatamente, el robot alterna el sentido del giro hasta reencontrarla, permitiendo continuar el recorrido de forma autónoma.
 
 [VIDEO RECOVER](https://youtu.be/RWa0rHS_2go)
+
+[![Video Recover](https://img.youtube.com/vi/RWa0rHS_2go/maxresdefault.jpg)](https://youtu.be/RWa0rHS_2go)
 
 #### Conclusiones
 Esta práctica ha permitido comprender cómo combinar técnicas de visión artificial y control para resolver un problema de navegación autónoma.

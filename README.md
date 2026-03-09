@@ -14,6 +14,8 @@ Una vez superado este primer inconveniente, pude avanzar con varios de los ejerc
 - **Convolutions:** realicé varias pruebas para mejorar el resultado y, aparentemente, la aplicación de convoluciones sí produce una mejora en la imagen.
 - **Hough transform:** probé la transformada de Hough para la detección de círculos. Aunque el círculo principal se detecta correctamente, también aparecen detecciones adicionales debidas al ruido presente en la imagen.
 
+---
+
 ## Práctica 1 - Visual Follow Line
 _23/02/2026_
 
@@ -64,6 +66,8 @@ Ya sabiendo que hay que fijarse en el tiempo de simulación para saber cuánto e
 Además, modifiqué el cálculo del ratio que ajusta la velocidad en función del giro. Antes era lineal, pero ahora lo hice cuadrático, de forma que el robot reduce la velocidad mucho más cuando entra en curvas muy cerradas. Con el cálculo anterior, al entrar rápido en esas curvas el robot tendía a salirse bastante y luego oscilaba demasiado intentando volver a la línea. Con el ratio cuadrático el frenado es más fuerte en esas situaciones, lo que ayuda a recuperar la trayectoria de forma más estable, perdiendo también menos tiempo en la recuperación.
 
 Aunque el comportamiento mejoró con respecto a las pruebas anteriores, todavía se aprecia un poco de oscilación en algunas curvas, por lo que probablemente aún sea necesario seguir afinando los parámetros en futuras pruebas.
+
+---
 
 ### Solución final del sistema de seguimiento de línea
 #### Seguimiento de línea mediante visión y control PD

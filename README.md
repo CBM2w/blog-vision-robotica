@@ -121,21 +121,21 @@ VIDEO SIMPLE CIRCUIT:
 
 Para comprobar la robustez del sistema también se realizaron pruebas en otros circuitos disponibles en el simulador, como _Montreal_ y _Montmeló_. Estos circuitos presentan curvas más pronunciadas y trayectorias más exigentes, lo que permite evaluar mejor el comportamiento del controlador. En ambos casos el robot es capaz de seguir la línea y completar el recorrido de forma razonablemente estable, lo que demuestra que el algoritmo no está ajustado únicamente para un único circuito concreto.
 
-[VIDEO MONTMELÓ CIRCUIT](https://youtu.be/oOFyQ14TyKk)
+VIDEO MONTMELÓ CIRCUIT:
 
-[![Video Montmeló](https://img.youtube.com/vi/oOFyQ14TyKk/maxresdefault.jpg)](https://youtu.be/oOFyQ14TyKk)
+[![Video Montmeló](https://img.youtube.com/vi/oOFyQ14TyKk/0.jpg)](https://youtu.be/oOFyQ14TyKk)
 
 Sin embargo, en el circuito _Nürburgring_ el sistema no consigue completar el recorrido. Desde el inicio, en la primera recta, el robot se desvía hacia la izquierda y pierde inmediatamente la línea, quedándose sin capacidad de continuar el seguimiento. 
 
-[VIDEO NURBURGUIN CIRCUIT](https://youtu.be/4LWieVPGa0k)
+VIDEO NURBURGUIN CIRCUIT:
 
-[![Video Nürburgring](https://img.youtube.com/vi/4LWieVPGa0k/maxresdefault.jpg)](https://youtu.be/4LWieVPGa0k)
+[![Video Nürburgring](https://img.youtube.com/vi/4LWieVPGa0k/0.jpg)](https://youtu.be/4LWieVPGa0k)
 
 Además, se ha incluido una demostración del funcionamiento del modo recover forzando al robot a girar completamente a la izquierda al empezar lo que provoca que se posiciones mirando a la pared. En este vídeo se puede observar cómo, cuando el robot pierde la línea, el sistema detecta la ausencia de la máscara y comienza a retroceder mientras gira en la última dirección conocida. Si la línea no aparece inmediatamente, el robot alterna el sentido del giro hasta reencontrarla, permitiendo continuar el recorrido de forma autónoma.
 
-[VIDEO RECOVER](https://youtu.be/RWa0rHS_2go)
+VIDEO RECOVER:
 
-[![Video Recover](https://img.youtube.com/vi/RWa0rHS_2go/maxresdefault.jpg)](https://youtu.be/RWa0rHS_2go)
+[![Video Recover](https://img.youtube.com/vi/RWa0rHS_2go/0.jpg)](https://youtu.be/RWa0rHS_2go)
 
 #### Conclusiones
 Esta práctica ha permitido comprender cómo combinar técnicas de visión artificial y control para resolver un problema de navegación autónoma.

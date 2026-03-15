@@ -184,3 +184,7 @@ Esta práctica ha permitido comprender cómo combinar técnicas de visión artif
 Uno de los aspectos más interesantes ha sido observar cómo pequeños cambios en los parámetros del controlador pueden afectar significativamente al comportamiento del sistema. Ajustar correctamente estos parámetros requiere realizar múltiples pruebas y analizar el comportamiento del robot en diferentes situaciones. También se ha visto la importancia de adaptar la velocidad al contexto del movimiento. Un robot que siempre se mueve a máxima velocidad puede resultar inestable, mientras que ajustar la velocidad en función del giro mejora notablemente la precisión del seguimiento.
 
 Por otro lado, el desarrollo del sistema ha remarcado la importancia de contar con mecanismos de recuperación cuando la detección falla. La mejora del modo recover permitió que el robot pudiera salir con mayor facilidad de situaciones comprometidas y volver a encontrar la trayectoria.
+
+---
+
+## Práctica 2 - 3D Reconstruction

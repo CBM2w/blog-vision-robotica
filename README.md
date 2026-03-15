@@ -188,3 +188,22 @@ Por otro lado, el desarrollo del sistema ha remarcado la importancia de contar c
 ---
 
 ## Práctica 2 - 3D Reconstruction
+_11/03/2026_
+
+Como primer paso comencé detectando los bordes en la imagen izquierda utilizando el detector _Canny_. El objetivo de esta parte inicial era simplemente visualizar los bordes obtenidos y comprobar que el detector funcionaba correctamente sobre las imágenes del sistema estéreo.
+
+Una vez verificado el resultado, utilicé estos bordes para seleccionar puntos de interés en la imagen izquierda, ya que las zonas de borde suelen contener más información visual y son más adecuadas para encontrar correspondencias entre ambas imágenes.
+
+_15/03/2026_
+
+Con los puntos de interés ya definidos, el siguiente paso fue buscar sus puntos homólogos en la imagen derecha.
+
+En un primer intento, decidií hacer un caso trivial y asumí que las cámaras estaban rectificadas, por lo que el punto correspondiente debía encontrarse aproximadamente en la misma fila de la imagen derecha. Esto limitaba la búsqueda a una ventana horizontal alrededor del punto original, reduciendo bastante el espacio de búsqueda.
+
+Sin embargo, para hacer el método más robusto y resistente a movimientos de cámara, utilicé geometría epipolar. En lugar de buscar únicamente sobre una línea horizontal, se calcula la recta epipolar asociada a cada punto de la imagen izquierda mediante retroproyección del píxel a un rayo 3D y su posterior proyección en la cámara derecha. Una vez definida la recta epipolar, la búsqueda del punto homólogo se realiza únicamente sobre una banda alrededor de dicha recta, en lugar de recorrer toda la imagen derecha. Esto permite mantener la restricción geométrica del sistema estéreo y al mismo tiempo tolerar pequeños errores numéricos o de discretización.
+
+Para determinar cuál de los candidatos es el punto homólogo correcto, comparé parches de imagen alrededor de cada punto. Para cada punto de interés en la imagen izquierda se extrae un pequeño parche cuadrado, que se utiliza como plantilla. Este parche se compara con los parches candidatos en la imagen derecha utilizando correlación normalizada (`cv2.matchTemplate`). El candidato con mayor valor de correlación se considera el mejor match. No obstante, para evitar correspondencias incorrectas se introduce un umbral de similitud, descartando aquellos candidatos cuyo valor de correlación sea demasiado bajo.
+
+Además, se aplica una restricción geométrica adicional basada en la disparidad horizontal. En un sistema estéreo convencional, el punto correspondiente en la imagen derecha debe aparecer desplazado hacia la izquierda respecto al de la imagen izquierda. Por este motivo, solo se aceptan matches cuya disparidad horizontal sea positiva.
+
+Por último, para mejorar el rendimiento del algoritmo se introducen varias optimizaciones prácticas. Por ejemplo, no se procesan puntos demasiado cercanos a los bordes de la imagen, ya que no permiten extraer parches completos, y se limita el rango de búsqueda horizontal mediante un radio máximo para evitar recorrer regiones innecesarias de la imagen.

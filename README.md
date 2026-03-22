@@ -207,3 +207,13 @@ Para determinar cuál de los candidatos es el punto homólogo correcto, comparé
 Además, se aplica una restricción geométrica adicional basada en la disparidad horizontal. En un sistema estéreo convencional, el punto correspondiente en la imagen derecha debe aparecer desplazado hacia la izquierda respecto al de la imagen izquierda. Por este motivo, solo se aceptan matches cuya disparidad horizontal sea positiva.
 
 Por último, para mejorar el rendimiento del algoritmo se introducen varias optimizaciones prácticas. Por ejemplo, no se procesan puntos demasiado cercanos a los bordes de la imagen, ya que no permiten extraer parches completos, y se limita el rango de búsqueda horizontal mediante un radio máximo para evitar recorrer regiones innecesarias de la imagen.
+
+_21/03/2026_
+
+Una vez obtenidos los puntos homólogos entre ambas imágenes, el siguiente paso fue hacer la reconstrucción 3D mediante triangulación. A partir de cada par de puntos correspondientes, se calcularon sus respectivos rayos en el espacio y se estimó su punto de intersección para obtener la posición 3D.
+
+En una primera versión, no se tuvo en cuenta el color de los píxeles, por lo que la nube de puntos resultante aparecía completamente en negro. Esto dificultaba bastante la interpretación visual de la reconstrucción, ya que no se apreciaban correctamente las formas ni la estructura de la escena. Posteriormente, se añadió el color a cada punto 3D tomando como referencia el valor del píxel correspondiente en la imagen original. Este cambio mejoró notablemente la visualización, permitiendo distinguir mejor las distintas partes de la escena.
+
+Sin embargo, la reconstrucción seguía siendo bastante pobre. Esto se debía principalmente a la baja cantidad de puntos utilizados, ya que únicamente se estaban considerando un número reducido de correspondencias (alrededor de 4000 puntos). Para mejorar este aspecto, se decidió aumentar significativamente el número de puntos, tomando una muestra aleatoria de aproximadamente 20000 puntos de interés. Con este aumento, la densidad de la nube de puntos creció y la reconstrucción era más completa.
+
+A pesar de esta mejora, al observar el resultado final se aprecia claramente una limitación importante, las zonas internas de los objetos no se reconstruyen bien. Esto pasa porque los puntos de interés utilizados son del detector de bordes, por lo que únicamente se seleccionan píxeles situados en los contornos de los objetos, nunca en el interior.

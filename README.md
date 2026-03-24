@@ -217,3 +217,144 @@ En una primera versión, no se tuvo en cuenta el color de los píxeles, por lo q
 Sin embargo, la reconstrucción seguía siendo bastante pobre. Esto se debía principalmente a la baja cantidad de puntos utilizados, ya que únicamente se estaban considerando un número reducido de correspondencias (alrededor de 4000 puntos). Para mejorar este aspecto, se decidió aumentar significativamente el número de puntos, tomando una muestra aleatoria de aproximadamente 20000 puntos de interés. Con este aumento, la densidad de la nube de puntos creció y la reconstrucción era más completa.
 
 A pesar de esta mejora, al observar el resultado final se aprecia claramente una limitación importante, las zonas internas de los objetos no se reconstruyen bien. Esto pasa porque los puntos de interés utilizados son del detector de bordes, por lo que únicamente se seleccionan píxeles situados en los contornos de los objetos, nunca en el interior.
+
+--- 
+
+### Solución final del sistema de reconstrucción 3D
+#### Obtención y preprocesado de imágenes
+El primer paso consiste en capturar las imágenes de las cámaras izquierda y derecha mediante el uso de la interfaz proporcionada ```(HAL.getImage)```. Posteriormente, ambas imágenes se convierten a escala de grises, ya que el proceso de búsqueda de correspondencias se realiza sobre intensidad y no sobre color.
+
+A continuación, se aplica el detector de bordes de Canny sobre la imagen izquierda. Esto permite identificar puntos de interés relevantes, ya que los bordes suelen corresponder a zonas con cambios bruscos de intensidad y, por tanto, son más fácilmente identificables en ambas imágenes.
+
+<p align="center">
+    <img width="500" height="500" alt="Punto centroide a las 21 44 45" src="https://github.com/user-attachments/assets/80878faa-d6c3-4a8e-9bc6-b57b18ccc1ac" />
+</p>
+
+<p align="center">
+  <em>Detección de bordes</em>
+</p>
+
+#### Selección de puntos de interés
+Una vez obtenidos los píxeles de borde, se extraen sus coordenadas utilizando ```np.where```. Inicialmente, se probó a trabajar con un subconjunto muy reducido de puntos (uno de cada 20), obteniendo alrededor de 900 puntos, con el objetivo de reducir el tiempo de ejecución. Sin embargo, la reconstrucción obtenida resultaba muy incompleta, ya que se perdía demasiada información de la escena.
+
+<p align="center">
+    <img width="500" height="500" alt="Punto centroide a las 21 44 45" src="https://github.com/user-attachments/assets/72b98133-eacb-4af5-96dc-f6b3ecab15bd" />
+</p>
+
+<p align="center">
+  <em>Selección de puntos 1 de cada 20</em>
+</p>
+
+Posteriormente, se optó por seleccionar aproximadamente 20000 puntos de forma aleatoria. Este enfoque mejoró notablemente los resultados, ya que se obtenía una nube de puntos más densa y representativa de la escena.
+
+<p align="center">
+    <img width="500" height="500" alt="Punto centroide a las 21 44 45" src="https://github.com/user-attachments/assets/7ce32c05-bc56-4dad-a4f1-66465809a440" />
+</p>
+
+<p align="center">
+  <em>Selección de 20000 puntos aleatorios</em>
+</p>
+
+Finalmente, por recomendación de un compañero, se probó una estrategia intermedia consistente en seleccionar un punto sí y uno no ```(points[::2])```. Con esta técnica se consigue una distribución más uniforme de los puntos. 
+
+<p align="center">
+    <img width="500" height="500" alt="Punto centroide a las 21 44 45" src="https://github.com/user-attachments/assets/45216113-abf4-4d4c-8fd3-1b66343f172f" />
+</p>
+
+<p align="center">
+  <em>Selección de puntos uno sí uno no</em>
+</p>
+
+#### Cálculo de la recta epipolar
+Para cada punto seleccionado en la imagen izquierda, se calcula su recta epipolar correspondiente en la imagen derecha. Este proceso se realiza en varios pasos:
+1. Se obtiene el rayo 3D correspondiente al píxel mediante retroproyección.
+2. A partir de ese píxel, se generan dos puntos sobre ese rayo en el espacio (la posición de la cámara y la dirección del rayo).
+3. Estos puntos se proyectan sobre la cámara derecha.
+4. Los dos puntos resultantes definen la recta epipolar en la imagen derecha.
+
+
+De este modo, la búsqueda del punto homólogo no se realiza en toda la imagen, sino únicamente sobre una región coherente con la geometría del sistema estéreo.
+
+<p align="center">
+    <img width="500" height="500" alt="Punto centroide a las 21 44 45" src="https://github.com/user-attachments/assets/14e10c69-c78a-4468-bd93-87a051e49336" />
+</p>
+
+<p align="center">
+  <em>Submuestra de rectas epipolares</em>
+</p>
+
+#### Búsqueda de correspondencias
+Una vez calculada la recta epipolar, se busca el punto homólogo en la imagen derecha. Para ello, alrededor del punto de la imagen izquierda se extrae un parche cuadrado de tamaño fijo 15x15. A continuación, se recorre la recta epipolar en la imagen derecha dentro de un rango horizontal limitado y, además, se considera una pequeña banda vertical alrededor de dicha recta para tolerar pequeños errores geométricos (franja epipolar).
+
+En cada candidato se extrae un parche y se compara con el parche original de la imagen izquierda mediante ```cv2.matchTemplate``` con correlación normalizada. El punto con mayor puntuación se toma como la mejor correspondencia candidata, determinando así los puntos homólogos.
+
+#### Validación de correspondencias
+No todas las correspondencias obtenidas son válidas, por lo que se aplica una fase de validación antes de aceptar el punto. Se han empleado tres condiciones:
+
+- La puntuación de correlación debe ser superior a un umbral ```(threshold = 0.7)```.
+- La disparidad horizontal debe ser positiva y suficientemente grande ```(dx > 2)```.
+- La diferencia vertical entre ambos puntos debe ser pequeña ```(abs(dy) < 4)```.
+
+Estas restricciones permiten eliminar muchos falsos emparejamientos y conservar únicamente correspondencias geométricamente consistentes.
+
+#### Triangulación
+Una vez validada la correspondencia entre el punto izquierdo y el derecho, se reconstruye el punto 3D utilizando la función ```cv2.triangulatePoints```. Para ello, primero se definen las matrices de proyección de ambas cámaras a partir de sus parámetros intrínsecos y extrínsecos. En concreto, se parte de las matrices K y RT de cada cámara y se construye la matriz de proyección como:
+
+$$P=K⋅RT$$
+
+Posteriormente, los píxeles emparejados de las cámaras izquierda y derecha se convierten de coordenadas gráficas a coordenadas ópticas, y se pasan a la función ```cv2.triangulatePoints``` en formato homogéneo. El resultado es un punto 4D homogéneo, que después se normaliza para obtener sus coordenadas cartesianas 3D.
+
+#### Corrección del sistema de referencia y visualización
+Una vez obtenido el punto 3D, se transforma al sistema de referencia usado por el visor mediante ```HAL.project3DScene```. Durante las pruebas se observó que la nube de puntos aparecía invertida verticalmente, por lo que fue necesario corregir la orientación invirtiendo el eje Y. Además, se añadió un pequeño desplazamiento vertical para elevar la escena y facilitar su visualización. De esta forma, antes de almacenar el punto reconstruido se aplica una corrección sobre la coordenada vertical para que la nube final se muestre correctamente orientada y mejor centrada en el visor.
+
+#### Asignación de color
+A cada punto 3D se le asigna un color calculado como la media entre el color del píxel correspondiente en la imagen izquierda y el de la imagen derecha. Dado que OpenCV maneja el color en formato BGR, al final se invierte el orden de los canales para almacenarlo en RGB, que es el formato esperado en la visualización de la nube.
+
+De este modo, cada punto final queda definido por seis valores:
+
+$$[x,y,z,r,g,b]$$
+
+lo que permite reconstruir no solo la geometría de la escena, sino también su apariencia visual.
+
+#### Resultados obtenidos
+El procedimiento desarrollado permite obtener una nube de puntos 3D razonablemente representativa de la escena. El uso de la geometría epipolar reduce el espacio de búsqueda y hace más eficiente el proceso de correspondencia. Además, el empleo de la función de triangulación de OpenCV proporciona una triangulación robusta que la aproximación manual utilizada en versiones previas.
+
+No obstante, la reconstrucción sigue dependiendo en gran medida de la calidad de los bordes detectados y de la capacidad del método de correlación para encontrar correspondencias correctas. Por ello, las zonas con poca textura o sin bordes marcados tienden a quedar menos representadas que las regiones con contornos bien definidos, como es la figura del pato.
+
+A continuación se muestran los resultados obtenidos para las distintas estrategias de selección de puntos:
+<p align="center">
+    <img width="500" height="500" alt="Punto centroide a las 21 44 45" src="https://github.com/user-attachments/assets/00055a3e-ec0b-4405-95b1-7bf9e98f5335" />
+</p>
+
+<p align="center">
+  <em>Reconstrucción con 900 puntos</em>
+</p>
+
+<p align="center">
+    <img width="500" height="500" alt="Punto centroide a las 21 44 45" src="https://github.com/user-attachments/assets/4bec3170-a8f0-4880-8a3b-4da43d53a729" />
+</p>
+
+<p align="center">
+  <em>Reconstrucción con 20000 puntos</em>
+</p>
+
+<p align="center">
+    <img width="500" height="500" alt="Punto centroide a las 21 44 45" src="https://github.com/user-attachments/assets/b20b5959-9400-48f6-b8f7-457515451f59" />
+</p>
+
+<p align="center">
+  <em>Reconstrucción con 8700 puntos</em>
+</p>
+
+Se observa que algunas figuras se completaban ligeramente mejor utilizando el segundo enfoque, aunque el cambio en la calidad global no era muy significativo. Por este motivo, se optó por mantener la estrategia de seleccionar puntos uno sí uno no, ya que ofrece un buen equilibrio entre calidad de reconstrucción y tiempo de ejecución. Esto se debe a que el número de puntos procesados se reduce notablemente, disminuyendo así el coste computacional del algoritmo sin comprometer en exceso la calidad del resultado.
+  
+#### Conclusiones
+El sistema desarrollado permite realizar una reconstrucción 3D de la escena a partir de imágenes estéreo de forma efectiva, combinando técnicas de procesamiento de imagen, geometría epipolar y triangulación. A lo largo del desarrollo se ha comprobado la importancia de cada una de las etapas del pipeline, especialmente la selección de puntos de interés y la búsqueda de correspondencias.
+
+Uno de los aspectos más relevantes ha sido el compromiso entre calidad de la reconstrucción y tiempo de ejecución. Se ha observado que utilizar un número elevado de puntos mejora la densidad de la nube, pero incrementa significativamente el coste computacional. Por el contrario, reducir excesivamente el número de puntos produce reconstrucciones incompletas. La estrategia intermedia de seleccionar un punto sí y uno no ha resultado ser una solución equilibrada, permitiendo mantener una representación razonable de la escena con un tiempo de ejecución mucho menor.
+
+Asimismo, el uso de la geometría epipolar ha permitido restringir el espacio de búsqueda de correspondencias, mejorando la eficiencia del algoritmo y reduciendo la probabilidad de emparejamientos incorrectos. La validación de correspondencias mediante restricciones geométricas y de correlación ha sido clave para eliminar falsos matches y obtener resultados más consistentes.
+
+En cuanto a la reconstrucción, se ha conseguido obtener una nube de puntos que representa de forma bastante fiel la estructura general de la escena, especialmente en aquellas zonas con mayor presencia de bordes. Sin embargo, también se ha observado que las regiones con menor textura o sin cambios de intensidad claros quedan menos definidas o incluso vacías.
+
+En general, el resultado final es satisfactorio, ya que permite visualizar correctamente la forma de los objetos principales de la escena. Además, todo el proceso ha servido para comprender mejor cómo influyen cada una de las decisiones tomadas en la calidad de la reconstrucción y en el rendimiento del sistema.

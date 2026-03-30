@@ -358,3 +358,22 @@ Asimismo, el uso de la geometría epipolar ha permitido restringir el espacio de
 En cuanto a la reconstrucción, se ha conseguido obtener una nube de puntos que representa de forma bastante fiel la estructura general de la escena, especialmente en aquellas zonas con mayor presencia de bordes. Sin embargo, también se ha observado que las regiones con menor textura o sin cambios de intensidad claros quedan menos definidas o incluso vacías.
 
 En general, el resultado final es satisfactorio, ya que permite visualizar correctamente la forma de los objetos principales de la escena. Además, todo el proceso ha servido para comprender mejor cómo influyen cada una de las decisiones tomadas en la calidad de la reconstrucción y en el rendimiento del sistema.
+
+---
+
+## Práctica 3 - Marker Based Visual Loc
+_30/03/2026_
+
+Hoy he avanzado bastante en la parte de localización visual del robot usando AprilTags. El objetivo era empezar a unir varias piezas importantes del problema: detectar marcadores en la imagen, estimar su pose respecto a la cámara y, a partir de ahí, acercarme al cálculo de la pose del robot en el mundo.
+
+Lo primero que he conseguido hacer es la detección de tags en tiempo real. A partir de la imagen capturada por la cámara del robot, se convierte la escena a escala de grises y se utiliza el detector de AprilTags, explicado en la documentación, para encontrar los marcadores visibles. Una vez detectados, se dibujan sus esquinas, el centro y su identificador sobre la imagen. Esta parte es importante porque permite comprobar visualmente que la detección está siendo correcta.
+
+Después de eso, como ya se conoce el tamaño real del tag, he definido sus cuatro esquinas en coordenadas 3D sobre su propio sistema de referencia. Esto me permite relacionar puntos reales del marcador con los puntos 2D observados en la imagen.
+
+El siguiente avance ha sido usar solvePnP para estimar la pose del marcador respecto a la cámara. Con los puntos 3D del tag y las esquinas detectadas en la imagen, el algoritmo devuelve la rotación y la traslación del marcador. En otras palabras, se puede obtener una matriz de transformación que me dice dónde está colocado el marcador con respecto a la cámara en cada instante. Además, he integrado la información del fichero de configuración donde están guardadas las poses conocidas de los tags en el mundo. Con eso construyo la matriz ```RT_world_marker```, es decir, la transformación desde el sistema global hasta cada marcador. Esto es clave, porque si conocemos dónde está el tag en el mundo y también sabemos cómo lo ve la cámara, entonces tenemos las piezas necesarias para estimar la posición del robot.
+
+Otro paso importante de hoy ha sido incluir la transformación fija entre cámara y robot, obtenida del modelo del TurtleBot. Esa matriz representa dónde está montada la cámara respecto a la base del robot ```RT_camera_robot```. También he trabajado la conversión entre sistemas de referencia. La pose obtenida por OpenCV no está directamente en el mismo convenio que usa Gazebo, así que he introducido una rotación de conversión para pasar de un sistema al otro. Esto era necesario para que todas las matrices fueran compatibles y poder combinarlas correctamente.
+
+Con todo esto, el código ya llega a calcular una matriz ```RT_world_robot```, que representa la pose estimada del robot en el mundo a partir de un marcador detectado. Es un paso grande porque ya no se trata solo de “ver” el tag, sino de empezar a usarlo realmente para localizar el robot.
+
+En resumen, hoy he conseguido pasar de una detección visual simple a una primera versión del pipeline de localización: detección del AprilTag, estimación de pose con PnP, construcción de matrices homogéneas, conversión de sistemas de referencia y cálculo de la pose del robot en el mundo.

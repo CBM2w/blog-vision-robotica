@@ -377,3 +377,11 @@ Otro paso importante de hoy ha sido incluir la transformación fija entre cámar
 Con todo esto, el código ya llega a calcular una matriz ```RT_world_robot```, que representa la pose estimada del robot en el mundo a partir de un marcador detectado. Es un paso grande porque ya no se trata solo de “ver” el tag, sino de empezar a usarlo realmente para localizar el robot.
 
 En resumen, hoy he conseguido pasar de una detección visual simple a una primera versión del pipeline de localización: detección del AprilTag, estimación de pose con PnP, construcción de matrices homogéneas, conversión de sistemas de referencia y cálculo de la pose del robot en el mundo.
+
+_12/04/2026_
+
+Al hacer que el robot avanzase y girase, me di cuenta de que la estimación de la posición no correspondía con la realidad. En concreto, la posición estimada aparecía sistemáticamente al otro lado del tag respecto a la posición real del robot. Este efecto era especialmente evidente al desplazarse frontalmente hacia el tag. Aunque la cadena de transformaciones basada en matrices homogéneas estaba planteada de forma teóricamente correcta, en la práctica había un error en la interpretación de los sistemas de referencia o en el sentido de alguna de las transformaciones. 
+
+A raíz de esto, decidí replantear el enfoque de la estimación. En lugar de seguir utilizando directamente la concatenación de matrices de transformación, usé por una aproximación más directa y controlada desde el punto de vista geométrico. El nuevo enfoque consiste en calcular explícitamente la posición de la cámara en el sistema de referencia del marker a partir de la salida de solvePnP, invirtiendo la transformación obtenida. A partir de ahí, se proyecta esta posición al plano de navegación utilizando únicamente las componentes relevantes (lateral y frontal), y posteriormente se transforma al sistema global empleando la orientación conocida del tag en el mundo.
+
+Este cambio permite controlar de forma más clara el significado de cada magnitud y, especialmente, los signos asociados a cada componente, evitando así errores derivados de interpretaciones implícitas en las matrices homogéneas. Además, me ha facilitado la validación del comportamiento del sistema, ya que cada paso puede comprobarse de forma independiente.

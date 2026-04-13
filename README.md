@@ -385,3 +385,86 @@ Al hacer que el robot avanzase y girase, me di cuenta de que la estimación de l
 A raíz de esto, decidí replantear el enfoque de la estimación. En lugar de seguir utilizando directamente la concatenación de matrices de transformación, usé por una aproximación más directa y controlada desde el punto de vista geométrico. El nuevo enfoque consiste en calcular explícitamente la posición de la cámara en el sistema de referencia del marker a partir de la salida de solvePnP, invirtiendo la transformación obtenida. A partir de ahí, se proyecta esta posición al plano de navegación utilizando únicamente las componentes relevantes (lateral y frontal), y posteriormente se transforma al sistema global empleando la orientación conocida del tag en el mundo.
 
 Este cambio permite controlar de forma más clara el significado de cada magnitud y, especialmente, los signos asociados a cada componente, evitando así errores derivados de interpretaciones implícitas en las matrices homogéneas. Además, me ha facilitado la validación del comportamiento del sistema, ya que cada paso puede comprobarse de forma independiente.
+
+--- 
+
+### Solución final del sistema de localización
+#### Obtención y preprocesado de imágenes
+
+El sistema comienza capturando imágenes de la cámara del robot se convierten a escala de grises. A partir de estas imágenes, se aplica un detector de AprilTags, que permite identificar de forma robusta los tags presentes en la escena. Para cada tag detectada, se obtienen sus esquinas en la imagen, su centro y su identificador único.
+
+#### Estimación de la pose del tag
+
+Una vez detectado un tag, se estima su pose utilizando la función de ```solvePnP```. Para ello, se utilizan dos conjuntos de información:
+
+- Las coordenadas 3D conocidas de las esquinas del tag en su propio sistema de referencia.
+- Las coordenadas 2D de esas mismas esquinas proyectadas en la imagen.
+
+A partir de estas correspondencias, se obtiene la transformación que relaciona el sistema del tag con el sistema de la cámara. Esta transformación incluye tanto una rotación como una traslación. Sin embargo, el objetivo del sistema no es conocer la posición del tag respecto a la cámara, sino la posición de la cámara respecto al tag. Por ello, es necesario invertir dicha transformación. Esto implica transponer la matriz de rotación y aplicar dicha rotación a la traslación con el signo adecuado. De este modo, se obtiene un vector que representa la posición de la cámara en el sistema de referencia del tag. Este vector está expresado en coordenadas tridimensionales.
+
+En este caso, no se ha tenido en cuenta la transformación entre la cámara y el robot, ya que ambos sistemas de referencia son coincidentes. Es decir, se asume que la cámara está situada en el origen del sistema del robot, por lo que la posición estimada de la cámara se toma directamente como la posición del robot sin necesidad de aplicar una transformación adicional.
+
+#### Proyección al plano de navegación
+
+Dado que el robot se mueve sobre un plano, la estimación tridimensional se reduce a dos dimensiones. Para ello, se seleccionan las componentes relevantes del vector:
+
+- La componente lateral (eje X del tag).
+- La componente frontal (eje Z del tag).
+
+Estas componentes se reorganizan en un vector bidimensional que representa la posición relativa de la cámara respecto al tag en el plano de navegación. En este proceso se fijan los signos de acuerdo con la convención elegida, de forma que el vector resultante sea coherente con el sistema de control del robot.
+
+#### Transformación al sistema global
+
+Cada tag tiene asociada una posición conocida en el mundo, definida previamente en un archivo de configuración. Esta información incluye tanto su posición como su orientación. Para obtener la posición global de la cámara, se realiza el siguiente proceso:
+
+- Se toma la posición del tag en el mundo.
+- Se construye una matriz de rotación a partir de la orientación del tag.
+- Se rota el vector de la cámara respecto al tag al sistema global.
+- Se suma dicho vector a la posición del tag.
+
+De este modo, se obtiene la posición final de la cámara en el sistema de referencia global.
+
+#### Lógica de navegación y localización
+
+El sistema combina la información visual y la odometría para estimar la pose del robot. Cada vez que se detecta un tag válido, la posición calculada se utiliza para actualizar la estimación global del robot. Esta actualización se considera una corrección absoluta, ya que se basa en información visual fiable. En este punto, la posición en el plano se obtiene de la visión, mientras que la orientación del robot se toma directamente de la odometría. Esta decisión simplifica el sistema, evitando tener que estimar el ángulo a partir de la orientación del tag.
+
+Cuando el robot no detecta ningún tag, no es posible realizar una corrección visual. En este caso, el sistema recurre a la odometría para mantener la estimación de la posición. Para ello, se calcula el desplazamiento del robot entre dos instantes consecutivos utilizando las lecturas de odometría, aplicándolo sobre la última pose estimada. Este mecanismo introduce un error acumulativo, pero permite evitar la pérdida total de la localización en ausencia de referencias visuales.
+
+Desde el punto de vista de la navegación, en situaciones en las que se detectan múltiples tags, el sistema selecciona como objetivo aquel que se encuentra más cercano a la cámara. Esta decisión se basa en la componente frontal de la traslación obtenida en la estimación de pose. De este modo, el robot siempre se dirige hacia el tag más próximo, lo que simplifica la lógica de navegación y reduce el error de estimación.
+
+La navegación del robot se basa en el seguimiento visual del tag seleccionado. Para ello, se calcula el error horizontal entre el centro de la imagen y el centro del tag detectado. Este error se utiliza para generar una velocidad angular proporcional, permitiendo que el robot gire hacia el tag. Además, se limita esta velocidad para evitar giros excesivos.
+
+La velocidad lineal se ajusta en función de la alineación con el tag:
+
+- Si el tag está muy descentrado, el robot avanza lentamente.
+- Si el tag está centrado, el robot avanza más rápido.
+
+De este modo, se consigue un comportamiento estable en el que el robot se orienta primero hacia el tag y posteriormente avanza en su dirección.
+
+Finalmente, cuando el robot no detecta ningún tag, entra en un modo de búsqueda en el que se detiene el avance y se aplica una velocidad angular constante, haciendo que el robot gire sobre sí mismo hasta encontrar un nuevo tag.
+
+#### Resultados obtenidos
+
+<p align="center">
+  <a href="https://youtu.be/pO9E1GwdQME">
+    <img src="https://img.youtube.com/vi/pO9E1GwdQME/0.jpg" width="500" alt="Ejemplo de localización 1">
+  </a>
+</p>
+
+<p align="center">
+  <em>Ejemplo de localización 1</em>
+</p>
+
+<p align="center">
+  <a href="https://youtu.be/pO9E1GwdQME">
+    <img src="https://img.youtube.com/vi/pO9E1GwdQME/0.jpg" alt="Ejemplo de localización 2">
+  </a>
+</p>
+
+<p align="center">
+  <em>Ejemplo de localización 2</em>
+</p>
+
+#### Conclusiones
+
+El sistema implementado demuestra cómo es posible combinar técnicas de visión por computador con información de odometría para resolver el problema de localización en robótica móvil. La estimación basada en tags proporciona información absoluta del entorno, mientras que la odometría permite mantener la continuidad de la pose entre observaciones. Esta combinación da lugar a un sistema robusto y sencillo de implementar. Además, la integración de una lógica de navegación basada en visión permite al robot interactuar con el entorno de forma autónoma, acercándose a los tags detectados.

@@ -468,3 +468,117 @@ Finalmente, cuando el robot no detecta ningún tag, entra en un modo de búsqued
 #### Conclusiones
 
 El sistema implementado demuestra cómo es posible combinar técnicas de visión por computador con información de odometría para resolver el problema de localización en robótica móvil. La estimación basada en tags proporciona información absoluta del entorno, mientras que la odometría permite mantener la continuidad de la pose entre observaciones. Esta combinación da lugar a un sistema robusto y sencillo de implementar. Además, la integración de una lógica de navegación basada en visión permite al robot interactuar con el entorno de forma autónoma, acercándose a los tags detectados.
+
+---
+
+## Práctica 4 - End-to-end Visual Control
+
+El objetivo de este proyecto es desarrollar un sistema de conducción autónoma end-to-end capaz de controlar un robot móvil dentro de un circuito utilizando únicamente imágenes obtenidas desde una cámara frontal. El sistema debe ser capaz de predecir la velocidad lineal (`v`) y la velocidad angular (`w`) directamente a partir de la imagen capturada. A diferencia de los métodos clásicos basados en detección de líneas mediante reglas programadas manualmente, en este proyecto se emplea aprendizaje profundo para que el propio modelo aprenda el comportamiento de conducción observando ejemplos reales.
+
+#### Dataset
+El dataset utilizado contiene imágenes capturadas desde un robot mientras recorre distintos circuitos. Cada imagen se encuentra asociada a una velocidad lineal y una velocidad angular. Cada imagen representa el estado visual del circuito en un instante concreto y sus valores asociados representan la acción de conducción que realizó el robot.
+
+Durante el desarrollo se detectó que las imágenes no podían abrirse correctamente tras descargar el repositorio. El problema estaba relacionado con Git LFS, ya que el dataset almacenaba las imágenes mediante este sistema. Una vez configurado correctamente Git LFS, las imágenes pudieron cargarse sin problemas.
+
+#### Preparación del dataset
+El primer paso consistió en relacionar cada imagen con sus valores de velocidad. Posteriormente se construyó un DataFrame con la información relevante.
+
+El dataset se dividió en tres subconjuntos: entrenamiento, validación y test. La división se realizó utilizando `train_test_split` con una distribución final de:
+* 70% entrenamiento
+* 15% validación
+* 15% test
+
+#### Preprocesado de las imágenes
+El modelo no recibe las imágenes originales directamente. Antes del entrenamiento se aplicó un proceso de preprocesado con el objetivo de reducir ruido y facilitar el aprendizaje.
+
+* Resize: Todas las imágenes fueron redimensionadas a `224x224`. Esto permite que todas las entradas tengan el mismo tamaño.
+* Normalización: Los valores de píxel se normalizaron al rango `[0,1]`, mejorando la estabilidad del entrenamiento.
+* Crop de la imagen: Se observó que parte de la imagen correspondía al cielo y zonas irrelevantes del escenario, lo que introducía ruido innecesario en el entrenamiento. Por este motivo se aplicó un recorte vertical eliminando aproximadamente el 46% superior de la imagen. Tras el crop, el modelo se centra principalmente en la carretera, la línea roja del circuito y las curvas.
+* Conversión RGB: Durante la inferencia en Unibotics fue necesario convertir las imágenes de BGR a RGB porque OpenCV utiliza BGR mientras que TensorFlow trabaja normalmente en RGB.
+
+#### Construcción del dataset
+Para optimizar la carga de datos se utilizó `tf.data.Dataset`. El pipeline de TensorFlow se utilizó para optimizar la carga y preparación de imágenes durante el entrenamiento. El sistema se encargaba automáticamente de:
+
+* Leer las imágenes desde disco
+* Aplicar el preprocesado
+* Agrupar imágenes en batches
+* Mezclar las muestras durante el entrenamiento
+* Optimizar la carga mediante prefetch
+
+#### Arquitectura
+La arquitectura utilizada está basada en una red neuronal convolucional. El modelo recibe como entrada una imagen del circuito y produce directamente como salida las velocidades del robot. La red está formada por:
+
+* Varias capas convolucionales para extraer características visuales
+* Capas densas finales encargadas de transformar la información visual en acciones de control
+
+El objetivo de las capas convolucionales es aprender automáticamente:
+
+* Bordes
+* Curvas
+* Posición de la línea
+* Dirección del circuito
+
+Mientras que las capas finales aprenden cómo transformar esa información en velocidades lineales y angulares.
+
+#### Entrenamiento
+Para el entrenamiento se utilizó:
+
+* Optimizador Adam
+* Error cuadrático medio (MSE) como función de pérdida
+* MAE como métrica complementaria
+
+Durante el entrenamiento el modelo fue aprendiendo progresivamente la relación entre la imagen capturada y las velocidades que debía aplicar el robot. 
+
+#### Resultados obtenidos
+<p align="center">
+  <a href="https://youtu.be/VvAwY8v60Dk">
+    <img src="https://img.youtube.com/vi/VvAwY8v60Dk/0.jpg" alt="Video Simple Circuit">
+  </a>
+</p>
+
+<p align="center">
+  <em>Demostración del seguimiento de línea en el circuito Simple Circuit (≈60s).</em>
+</p>
+
+<p align="center">
+  <a href="https://youtu.be/l5VAVoxSOHA">
+    <img src="https://img.youtube.com/vi/l5VAVoxSOHA/0.jpg" alt="Video Montreal Circuit">
+  </a>
+</p>
+
+<p align="center">
+  <em>Demostración del seguimiento de línea en el circuito Montreal</em>
+</p>
+
+<p align="center">
+  <a href="https://youtu.be/XMN_C_DzNRA">
+    <img src="https://img.youtube.com/vi/XMN_C_DzNRA/0.jpg" alt="Video Montmeló Circuit">
+  </a>
+</p>
+
+<p align="center">
+  <em>Demostración del seguimiento de línea en el circuito Montmeló.</em>
+</p>
+
+<p align="center">
+  <a href="https://youtu.be/XXjkoLvhPyw">
+    <img src="https://img.youtube.com/vi/XXjkoLvhPyw/0.jpg" alt="Video Nürburgring Circuit">
+  </a>
+</p>
+
+<p align="center">
+  <em>Demostración del seguimiento de línea en el circuito Nürburgring.</em>
+</p>
+
+#### Integración en Unibotics
+El modelo entrenado se exportó al formato ONNX para poder ejecutarlo posteriormente dentro de Unibotics. La integración se realizó utilizando ONNX Runtime, permitiendo ejecutar inferencia en tiempo real dentro del simulador. Durante esta fase fue necesario replicar exactamente el mismo preprocesado utilizado durante el entrenamiento.
+
+* Conversión de BGR a RGB
+* Crop de la imagen
+* Resize
+* Normalización
+
+La consistencia entre entrenamiento e inferencia es fundamental para obtener un comportamiento correcto del robot.
+
+#### Conclusiones
+El enfoque end-to-end mediante PilotNet permite controlar el robot utilizando únicamente imágenes como entrada. El modelo consiguió aprender correctamente el comportamiento básico del circuito, demostrando la viabilidad de las técnicas de aprendizaje profundo aplicadas a robótica móvil. Además, la integración completa con ONNX Runtime y Unibotics permitió ejecutar el sistema en tiempo real.
